@@ -1,78 +1,84 @@
+#from curses import raw
 from hstest import *
+from string import ascii_letters
 from random import randrange
 
 
 class TestUserProgram(StageTest):
-    @dynamic_test
-    def test(self):
+    @dynamic_test(data=[("Yeah, okay!", "Great!"), ("Let's be friends.", "What a pity!"), ("No.", None), ("Yena, noay!", None)])
+    def test(self, test_answer, user_answer):
         pr = TestedProgram()
         pr.start()
 
         g, p = randrange(100, 1000), randrange(100, 1000)
 
-        raw_output = pr.execute(f"g is {g} and p is {p}")
+        raw_output1 = pr.execute(f"g is {g} and p is {p}")
 
-        self.check_empty_or_none_output(raw_output)
+        self.check_empty_or_none_output(raw_output1)
 
-        if raw_output.lower().strip() != "ok":
+        if raw_output1.lower().strip() != "ok":
             raise WrongAnswer(
                 "Your output should be equal to  \"OK\".\n"
-                f"Your output: {raw_output}.")
+                f"Your output: {raw_output1}.")
 
-        a = randrange(111690, 111690 + 100)
-        A = (g ** a) % p
+        priv_key = self.generate_private_key(p)
+        pub_key = self.generate_public_key(g, priv_key, p)
 
-        raw_output = pr.execute(f"A is {A}")
+        raw_output2 = pr.execute(f"A is {pub_key}")
 
-        self.check_empty_or_none_output(raw_output)
+        self.check_empty_or_none_output(raw_output2)
 
-        # Should get 3 lines of output back: B, A, and S
-        respLines = [line.strip() for line in raw_output.split('\n') if len(line.strip()) > 0]
+        output_lines = raw_output2.strip().split("\n")
 
-        if len(respLines) < 3:
+        if len(output_lines) == 1:
             raise WrongAnswer(
-                f"Expected 3 lines after receiving Alice's 'A' value, found {len(respLines)}")
+                "Your program did not print the encrypted message "
+                "\"Will you marry me?\".")
+        if len(output_lines) > 2:
+            raise WrongAnswer(
+                "Your program prints extra lines.")
 
-        string_with_user_pub_key = respLines[0]
-        string_with_comp_pub_key = respLines[1]
-        string_with_shared_secret = respLines[2]
+        string_with_user_pub_key, message = output_lines
 
-        B = 0
         try:
-            B = int(string_with_user_pub_key.lower().lstrip("b is ").strip())
+            user_pub_key = int(
+                string_with_user_pub_key.lower().lstrip("b is ").strip())
 
         except ValueError:
             raise WrongAnswer(
                 "It is not possible to get B from your output.\n"
                 f"Your output: {string_with_user_pub_key}.")
 
-        try:
-            int(string_with_comp_pub_key.lower().lstrip("a is ").strip())
+        shared_secret = self.compute_shared_secret(user_pub_key, priv_key, p)
 
-        except ValueError:
+        if self.decrypt_message(message.strip(), shared_secret).lower() != "will you marry me?":
             raise WrongAnswer(
-                "It is not possible to get A from your output.\n"
-                f"Your output: {string_with_comp_pub_key}.")
+                "Unable to decrypt your message.\n"
+                f"Your should encrypt \"Will you marry me?\".")
 
-        userSharedSecret = None
-        try:
-            userSharedSecret = int(string_with_shared_secret.lower().lstrip("s is ").strip())
+        raw_user_answer = pr.execute(
+            self.encrypt_message(test_answer, shared_secret))
 
-        except ValueError:
+        if test_answer == "No." or test_answer == "Yena, noay!":
+            if not raw_user_answer:
+                return CheckResult.correct()
             raise WrongAnswer(
-                "It is not possible to get S from your output.\n"
-                f"Your output: {string_with_shared_secret}.")
+                "If the answer is neither \"Yeah, okay!\" nor "
+                "\"Let's be friends.\" your program should not print anything, "
+                f"but your output is \"{raw_user_answer}\".\n"
+                f"Hint: Even if the encrypted message looks like it might be a valid message, you won't know until you decrypt.")
 
-        expectedSecret = (B ** a) % p
-        if expectedSecret != userSharedSecret:
+        self.check_empty_or_none_output(raw_user_answer)
+
+        decrypted_user_answer = self.decrypt_message(raw_user_answer.strip(), shared_secret)
+
+        if decrypted_user_answer.lower() != user_answer.lower():
             raise WrongAnswer(
-                "Your value for S does not match the expected value.\n"
-                f"Given p={p}, A={A}, B={B}\n"
-                f"S should be S={expectedSecret}.\n"
-                f"(Note that there is no specific value for b required. Your code should work for any b you choose.)\n"
-                f"This check was done versus S=(B^a) mod p , where a is the secret value selected by the test used to make A."
-
-            )
+                "Unable to decrypt your answer.\n"
+                "Perhaps you made a mistake in the implementation of the protocol.\n"
+                f"Your answer should be \"{user_answer}\", "
+                f"but your decrypted output is \"{decrypted_user_answer}\".\n"
+                )
 
         return CheckResult.correct()
 
@@ -80,6 +86,48 @@ class TestUserProgram(StageTest):
     def check_empty_or_none_output(output):
         if not output:
             raise WrongAnswer("Your output is empty or None.")
+
+    @staticmethod
+    def compute_shared_secret(pub_key, priv_key, p):
+        return pow(pub_key, priv_key, p)
+
+    @staticmethod
+    def generate_private_key(p):
+        return randrange(2, p)
+
+    @staticmethod
+    def generate_public_key(g, priv_key, p):
+        return pow(g, priv_key, p)
+
+    @staticmethod
+    def encrypt_message(msg, key):
+        encrypted_msg = []
+
+        for char in msg:
+            if char in ascii_letters:
+                letter = chr(((ord(char.lower()) - 97) + key) % 26 + 97)
+                if char.isupper():
+                    letter = letter.upper()
+                char = letter
+
+            encrypted_msg.append(char)
+
+        return "".join(encrypted_msg)
+
+    @staticmethod
+    def decrypt_message(msg, key):
+        decrypted_msg = []
+
+        for char in msg:
+            if char in ascii_letters:
+                letter = chr((ord(char.lower()) - 97 - key) % 26 + 97)
+                if char.isupper():
+                    letter = letter.upper()
+                char = letter
+
+            decrypted_msg.append(char)
+
+        return "".join(decrypted_msg)
 
 
 if __name__ == '__main__':
