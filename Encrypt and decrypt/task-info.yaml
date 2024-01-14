@@ -142,25 +142,10 @@ files:
       if __name__ == '__main__':
           TestUserProgram().run_tests()
     learner_created: false
-feedback_link: https://hyperskill.org/projects/236/stages/1187/implement#comment
+feedback_link: https://hyperskill.org/learn/step/18315#comment
 check_profile: hyperskill_go
-status: Failed
+status: Solved
 feedback:
-  message: |-
-    Wrong answer in test #1
-
-    Your output is empty or None.
-
-    Please find below the output of your program during this failed test.
-    Note that the '>' character indicates the beginning of the input line.
-
-    ---
-
-    > g is 935 and p is 205
-    OK
-    > A is 25
-    B is 80
-    Jvyy lbh zneel zr?
-    > Lrnu, bxnl!
-  time: "Fri, 12 Jan 2024 14:12:31 UTC"
+  message: <html>Correct solution</html>
+  time: "Sun, 14 Jan 2024 14:44:11 UTC"
 record: -1

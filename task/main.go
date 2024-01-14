@@ -94,9 +94,9 @@ func getProposalResponse() (proposalResponse string) {
 
 // getResponseReaction uses the shared encryption key S to determine and return the correct reaction to the response.
 func getResponseReaction(S int, response string) (reaction string) {
-	if encryptString(S, response) == encryptString(S, "Yeah, okay!") {
+	if response == encryptString(S, "Yeah, okay!") {
 		reaction = "Great!"
-	} else if encryptString(S, response) == encryptString(S, "Let's be friends.") {
+	} else if response == encryptString(S, "Let's be friends.") {
 		reaction = "What a pity!"
 	} else {
 		return ""

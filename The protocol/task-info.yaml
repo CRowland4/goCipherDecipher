@@ -40,7 +40,7 @@ files:
       if __name__ == '__main__':
           TestUserProgram().run_tests()
     learner_created: false
-feedback_link: https://hyperskill.org/projects/236/stages/1185/implement#comment
+feedback_link: https://hyperskill.org/learn/step/18313#comment
 check_profile: hyperskill_go
 status: Solved
 feedback:
