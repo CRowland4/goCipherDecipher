@@ -32,7 +32,7 @@ func main() {
 
 // getGAndP reads and returns the variables g and p from StdIn, with the input format of "g is _ and p is _".
 func getGAndP() (g, p int) {
-	fmt.Scanf("g is %d and p is %d\n", &g, &p)
+	_, _ = fmt.Scanf("g is %d and p is %d\n", &g, &p)
 	return g, p
 }
 
@@ -48,7 +48,7 @@ func calculateB(g, p, b int) (B int) {
 
 // getA reads and returns the variable A from StdIn, with the input format of "A is _".
 func getA() (A int) {
-	fmt.Scanf("A is %d\n", &A)
+	_, _ = fmt.Scanf("A is %d\n", &A)
 	return A
 }
 
